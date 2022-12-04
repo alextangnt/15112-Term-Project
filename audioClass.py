@@ -11,8 +11,8 @@ import numpy as np
 import copy
 
 class Recording():
-    noiseMag = 0.001
-    minPitch = 150
+    noiseMag = 0.003
+    minPitch = 500
     maxPitch = 2000
     def __init__(self, outputHeight = 500):
         self.outputHeight = outputHeight
@@ -35,6 +35,7 @@ class Recording():
 
         self.mag = 0
         self.pitchList = [outputHeight/2]
+        self.magList = []
     
     @staticmethod
     def almostEqual(a,b,round):

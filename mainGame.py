@@ -27,7 +27,8 @@ def setup_onAppStart(app):
 
 
 def setup_onScreenActivate(app):
-
+    app.onOff = 'on'
+    #app.pendingScreen = None
     app.currScreen = 'setup'
     app.message = None
     app.message2 = None
@@ -73,6 +74,10 @@ def setup_onMouseMove(app,mouseX,mouseY):
 
 def setup_onStep(app):
     if not app.paused:
+        if app.pendingScreen == 'setup':
+            Element.allOff(app.currScreen)
+            app.pendingScreen = None
+        movingStep(app)
         Cloud.onStep(app)
         for cloud in Cloud.onScreenList:
                 cloud.parameter[0]-=1
@@ -129,7 +134,7 @@ def setup_onStep(app):
 
 def setup_onKeyPress(app, key):
     if key == 's':
-        setActiveScreen('play')
+        setActiveScreen('home')
 
 
 ######## setup screen
@@ -140,8 +145,8 @@ def almostEqual(a,b):
     return False
 
 
-def play_onAppStart(app):
-    app.currScore = 0
+def home_onAppStart(app):
+
     app.started=False
     app.paused = False
     app.timer=0
@@ -152,12 +157,12 @@ def play_onAppStart(app):
     
 
     app.butts = set()
-    app.settings = Button('play','Set Up',5*app.width/7,4*app.height/5)
-    app.tutorial = Button('play','Tutorial',2*app.width/7,4*app.height/5)
-    #app.play = Button('play','Play')
+    app.settings = Button('home','Set Up',5*app.width/7,4*app.height/5)
+    app.tutorial = Button('home','Tutorial',2*app.width/7,4*app.height/5)
+    #app.play = Button('home','home')
     app.butts.add(app.settings)
     app.butts.add(app.tutorial)
-    app.butts.add(imgButton('play','Play',app.width/2,4*app.height/5,app.playButton,100,100))
+    app.butts.add(imgButton('home','play',app.width/2,4*app.height/5,app.playButton,100,100))
     
     app.timerC=0
     app.cloud=True
@@ -170,9 +175,11 @@ def play_onAppStart(app):
     app.recorder = Recording(app.height-50)
     app.recorder.pause()
 
-def play_onScreenActivate(app):
-    app.currScreen = 'play'
-    print('play screen')
+def home_onScreenActivate(app):
+    app.onOff = 'on'
+    app.pendingScreen = None
+    app.currScreen = 'home'
+    print('home screen')
 
 def openImages(app):
     # bird and bug gifs animated by Zen Jitsajjappong (Andrew ID pjitsajj)
@@ -192,6 +199,7 @@ def openImages(app):
     app.bg=CMUImage(Image.open('images/sky.png'))
     app.playButton=CMUImage(Image.open('images/play.png'))
     app.tweater1=CMUImage(Image.open('images/tweater.png'))
+    app.tweaterE = Element('home',app.width/2,app.height/3,'x')
     app.cloudImage=[app.cloud1,app.cloud2,app.cloud3,app.cloud4]
 
 #####################Loading image################
@@ -213,7 +221,7 @@ def loadAnimatedGif(app,path):
 ############
 
 
-def play_redrawAll(app):
+def home_redrawAll(app):
     
     drawLine(app)
     drawBackgroud(app)
@@ -223,19 +231,32 @@ def play_redrawAll(app):
     drawButtons(app)
     drawBird(app)
     drawFood(app)
-    drawLabel(app.currScore,9*app.width/10,1*app.height/10,font=app.font,fill=app.textColor,size=25,bold=True)
     #drawblack(app)
 
-def splitScreen(app):
+def play_onScreenActivate(app):
+    app.onOff = 'on'
+    app.pendingScreen = None
+    print('play screen')
+    app.currScreen = 'play'
+    app.currScore = 0
+    app.scoreE = Element('play',7.5*app.width/10,1*app.height/10,'y')
+    app.scoreE.goOff()
+
+def play_redrawAll(app):
+    drawLine(app)
+    drawBackgroud(app)
+    drawCloud(app)
+    drawTweater(app)
+    drawButtons(app)
+    drawBird(app)
+    drawFood(app)
+    drawScore(app)
     
+def splitScreen(app):
     app.Introx-=15
     for butt in app.butts:
         if butt.screen == app.currScreen:
             butt.cx+=15
-
-def moveElement(app):
-    tempcx = 0
-    tempcy = 0
 
 def deactivateButtons(app,title):
     for butt in Button.butts:
@@ -247,9 +268,26 @@ def activateButtons(app):
         if butt.screen == app.currScreen:
             butt.active = True
 
+#def pending()
+
+def movingStep(app):
+    if app.onOff!= None:
+        if app.onOff == 'off':
+            if Element.moveOffStep(app.currScreen):
+                app.onOff = None
+                if app.pendingScreen != None:
+                    setActiveScreen(app.pendingScreen)
+        if app.onOff == 'on':
+            if Element.moveOnStep(app.currScreen):
+                app.onOff = None
+                # if app.pendingScreen != None:
+                #     setActiveScreen(app.pendingScreen)
+            
+
 def pressButton(app,which):
     if which.title == 'Set Up':
-        setActiveScreen('setup')
+        app.onOff = 'off'
+        app.pendingScreen = 'setup'
     elif which.title == 'Noise':
         deactivateButtons(app,'Noise')
         app.recorder.magList = []
@@ -265,10 +303,9 @@ def pressButton(app,which):
         app.message = 'Noise magnitude has been reset.'
         app.message2 = None
     elif which.title == 'Done':
-        setActiveScreen('play')
-        deactivateButtons(app,'Done')
-        activateButtons(app)
-    elif which.title == 'Play':
+        app.onOff = 'off'
+        app.pendingScreen = 'home'
+    elif which.title == 'play':
         app.started=True
         if not app.recorder.stream.is_active():
                 app.recorder.start()
@@ -306,11 +343,11 @@ def pressButton(app,which):
                 app.message2 = None
                 #which.title += ':' + str(int(Recording.minPitch))
 
-def play_onMousePress(app,mouseX,mouseY):
-    if app.currScreen == 'play':
+def home_onMousePress(app,mouseX,mouseY):
+    if app.currScreen == 'home':
         checkButtonPress(app,mouseX,mouseY)
 
-def play_onMouseMove(app,mouseX,mouseY):
+def home_onMouseMove(app,mouseX,mouseY):
     buttonHover(app,mouseX,mouseY)
 
 def buttonHover(app,mouseX,mouseY):
@@ -350,8 +387,12 @@ def play_onKeyPress(app,key):
         app.p.terminate()
         app.quit()
 
-def play_onStep(app):
+def home_onStep(app):
     if not app.paused:
+        if app.pendingScreen == 'home':
+            Element.allOff(app.currScreen)
+            app.pendingScreen = None
+        movingStep(app)
         Cloud.onStep(app)
         for cloud in Cloud.onScreenList:
                 cloud.parameter[0]-=1
@@ -407,7 +448,7 @@ def play_onStep(app):
             #put this in the audioClass
             if len(app.recorder.pitchList)>10:
                 app.recorder.pitchList = app.recorder.pitchList[-9:]
-        
+
 
 def moveSmooth(app):
     target = app.height-app.recorder.getCastFreq()
@@ -420,6 +461,11 @@ def distance(l1,l2,c1,c2):
 
     return math.sqrt((l1-c1)**2+(l2-c2)**2)
 
+def drawScore(app):
+    cx=app.scoreE.currX
+    cy=app.scoreE.currY
+    drawLabel(f'Score: {app.currScore}',cx,cy,font=app.font,fill=app.textColor,size=25,bold=True,align='left')
+    #drawLabel('Score:',cx-90,cy,fill=app.textColor,size=25,bold=True,font=app.font)
   
 def eat(app):
     
@@ -441,21 +487,20 @@ def drawButtons(app):
         if butt.screen == app.currScreen:
             if isinstance(butt,imgButton):
                 imgW, imgH = getImageSize(butt.img)
-                drawImage(butt.img, butt.cx, butt.cy, align='center',
+                drawImage(butt.img, butt.currX, butt.currY, align='center',
                 width=imgW*butt.scale/100,height=imgH*butt.scale/100)
             else:
                 if butt.active == False:
-                    drawLabel(butt.title,butt.cx,butt.cy,size=butt.fontSize*butt.scale/100,font=app.font,bold=True,fill=app.textColor,opacity=50)
+                    drawLabel(butt.title,butt.currX,butt.currY,size=butt.fontSize*butt.scale/100,font=app.font,bold=True,fill=app.textColor,opacity=50)
                 else:
                     
                     #drawRect(butt.cx,butt.cy,butt.bw,butt.bh,align='center',fill=RGB(236,234,226))
-                    drawLabel(butt.title,butt.cx,butt.cy,size=butt.fontSize*butt.scale/100,font=app.font,bold=True,fill=app.textColor)
+                    drawLabel(butt.title,butt.currX,butt.currY,size=butt.fontSize*butt.scale/100,font=app.font,bold=True,fill=app.textColor)
             
 
 def drawTweater(app):
-    cx=app.Introx
-    cy=app.height/3
-    #canvas.create_image(cx,cy,image=ImageTk.PhotoImage(app.tweater1))
+    cx=app.tweaterE.currX
+    cy=app.tweaterE.currY
     drawImage(app.tweater1, cx, cy, align='center')
     
 
@@ -536,7 +581,7 @@ def drawLine(app):
 
 
 def main():
-    runAppWithScreens(initialScreen='play', width=800,height=500)
+    runAppWithScreens(initialScreen='home', width=800,height=500)
 main()
 
     

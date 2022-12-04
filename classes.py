@@ -93,24 +93,72 @@ class Bird:
     def __repr__(self):
         return f'bird on rail {self.currentRail}, mouth open is {self.mouthOpen}'
 
-# class Element():
-#     def __init__(self,screenX,screenY):
-#         self.screenX = screenX
-#         self.screenY = screenY
-#         # if xMove:
-#         #     self.offX = -50
-#         #     self.offY = screenY
-#         # if yMove:
-#         #     self.offY = -50
-#         #     self.offX = screenY
-        
-#     def moveOff(self):
+class Element():
+    offAmount = -300
+    elements = dict()
+    def __init__(self,screen,screenX,screenY,direction):
+        #self.screen = screen
+        self.screenX = screenX
+        self.screenY = screenY
+        self.currX = self.screenX
+        self.currY = self.screenY
+        self.direction = direction # x or y
+        Element.elements[screen] = Element.elements.get(screen,set()).union({self})
+
+    def moveOffStep(screen):
+        allOff = True
+        for element in Element.elements[screen]:
+            if element.direction == 'x':
+                if element.currX >= Element.offAmount:
+                    element.currX -=20
+                    allOff = False
+            elif element.direction == 'y':
+                if element.currY >= Element.offAmount:
+                    element.currY -=20
+                    allOff = False
+        return allOff
+
+    def moveOnStep(screen):
+        allOn = True
+        for element in Element.elements[screen]:
+            if element.direction == 'x':
+                if element.currX <= element.screenX:
+                    element.currX +=20
+                    allOn = False
+            elif element.direction == 'y':
+                if element.currY <= element.screenY:
+                    element.currY +=20
+                    allOn = False
+        return allOn
+
+    def allOff(screen):
+        for element in Element.elements[screen]:
+            Element.goOff(element)
+    
+    def allOn(screen):
+        for element in Element.elements[screen]:
+            Element.goOn(element)
+
+    def goOff(self):
+        if self.direction == 'x':
+            self.currX = Element.offAmount
+        elif self.direction == 'y':
+            self.currY = Element.offAmount
+
+    def goOn(self):
+        if self.direction == 'x':
+            self.currX = self.screenX
+        elif self.direction == 'y':
+            self.currY = self.screenY
+
+    def changeDir(self,dir):
+        self.direction = dir
 
 
 class Button(Element):
     butts = set()
     def __init__(self,screen,title,cx,cy,bw=100,bh=60,description='',active=True,fontSize=25):
-        super().__init__(cx,cy)
+        super().__init__(screen,cx,cy,'x')
         self.screen = screen
         self.title = title
         self.cx = cx
