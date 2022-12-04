@@ -1,3 +1,4 @@
+import cmu_graphics
 import random
 
 # Classes and original rail mechanic made by zilyuj, largely being restructured by me
@@ -92,13 +93,46 @@ class Bird:
     def __repr__(self):
         return f'bird on rail {self.currentRail}, mouth open is {self.mouthOpen}'
 
-class Button:
-    butts = []
-    def __init__(self,title,cx,cy,size=30,description=''):
+# class Element():
+#     def __init__(self,screenX,screenY):
+#         self.screenX = screenX
+#         self.screenY = screenY
+#         # if xMove:
+#         #     self.offX = -50
+#         #     self.offY = screenY
+#         # if yMove:
+#         #     self.offY = -50
+#         #     self.offX = screenY
+        
+#     def moveOff(self):
+
+
+class Button(Element):
+    butts = set()
+    def __init__(self,screen,title,cx,cy,bw=100,bh=60,description='',active=True,fontSize=25):
+        super().__init__(cx,cy)
+        self.screen = screen
         self.title = title
         self.cx = cx
         self.cy = cy
-        self.size = size
+        self.bw = bw
+        self.bh = bh
         self.desc = description
-        Button.butts.append(self)
+        self.scale = 100
+        self.active = active
+        self.fontSize = fontSize
+        Button.butts.add(self)
+    
+    def __repr__(self):
+        return '<' + self.title + ' button>'
+    
+    
+    # def labelStr(self):
+    #     #return f'self.cx,self.cy,self.bw,self.bh'
+    #     return "butt.title,butt.cx,butt.cy,size=25,font='monospace',bold=True,fill=RGB(22,33,63)"
+
+class imgButton(Button):
+    def __init__(self,screen,title,cx,cy,img,bw=100,bh=30,description=''):
+        super().__init__(screen,title,cx,cy,bw,bh,description)
+        self.img = img
 

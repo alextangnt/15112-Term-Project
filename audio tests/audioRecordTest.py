@@ -136,7 +136,7 @@ def getFreq(array,buffer_size,samplerate):
             frequencies.append(tempFreq)
 
     if frequencies != []:
-        print(frequencies)
+        print(sorted(frequencies))
         return min(frequencies)
 
 

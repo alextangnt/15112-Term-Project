@@ -11,9 +11,9 @@ import numpy as np
 import copy
 
 class Recording():
-    noiseMag = 0.005
-    minFreq = 150
-    maxFreq = 2000
+    noiseMag = 0.001
+    minPitch = 150
+    maxPitch = 2000
     def __init__(self, outputHeight = 500):
         self.outputHeight = outputHeight
         # initialise pyaudio
@@ -95,20 +95,23 @@ class Recording():
         self.frames = 0
     
     def getCastFreq(self):
-        castedVal = (self.pitchList[-1]-self.minFreq)/(self.maxFreq-self.minFreq)*self.outputHeight
+        castedVal = (self.pitchList[-1]-self.minPitch)/(self.maxPitch-self.minPitch)*self.outputHeight
         if castedVal > self.outputHeight:
             castedVal = self.outputHeight
         return castedVal
         #print(int(freq),int(castedVal))
 
-    def updateNoise(self, noise):
+    @classmethod
+    def updateNoise(self,noise):
         if noise >= Recording.noiseMag:
             Recording.noiseMag = noise
     
-    def updateMaxPitch(self, highest):
+    @classmethod
+    def updateMaxPitch(self,highest):
         Recording.maxPitch = highest
 
-    def updateMinPitch(self, lowest):
+    @classmethod
+    def updateMinPitch(self,lowest):
         Recording.minPitch = lowest
     
     def pause(self):

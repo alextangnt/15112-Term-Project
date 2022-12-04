@@ -3,21 +3,32 @@ import random
 from PIL import Image
 import math
 
-from classes import Bird, Food, Cloud
+from classes import *
 from audioClass import Recording
 #############################################################
 
 
 ########################################################################
-# SCREENS: splash/ play/ end
+# SCREENS: setup/ play/ end
 
-def splash_onScreenStart(app):
-    app.stepsPerSecond = 44
+def onAppStart(app):
+    app.font = 'monospace'
+    app.textColor = RGB(22,33,63)
+    app.currScreen = 'start'
+    app.scores = []
+
+def setup_onAppStart(app):
+    app.setupButts = {Button('setup','Noise',app.width/5,app.height/2-20),
+            Button('setup','Reset Noise Level',app.width/5,app.height/2+20,fontSize=15,bh=30),
+            Button('setup','Lowest',4*app.width/5,30+app.height/2),
+            Button('setup','Highest',4*app.width/5,app.height/2-30),
+            Button('setup','Done',app.width/2,3.5*app.height/5)}
     app.bW,app.bH = 60,30
-    app.buttons = {'Noise':(app.width/5,app.height/2),
-                    'Lowest':(4*app.width/5,20+app.height/2),
-                    'Highest':(4*app.width/5,app.height/2-20),
-                    'Start':(app.width/2,3*app.height/5)}
+
+
+def setup_onScreenActivate(app):
+
+    app.currScreen = 'setup'
     app.message = None
     app.message2 = None
     app.loading = False
@@ -25,101 +36,103 @@ def splash_onScreenStart(app):
     app.measureNoise = False
     app.measureHigh = False
     app.measureLow = False
+    if app.recorder.stream.is_active():
+        app.recorder.pause()
 
-    app.recorder = Recording()
-    app.recorder.pause()
-
-
-def splash_redrawAll(app):
-    drawRect(0,0,app.width,app.height,fill = 'turquoise')
-    drawLabel('Welcome! Let\'s do some setup.', app.width/2,app.height/5,size=20)
-    for button in app.buttons:
-        drawRect(*app.buttons[button],app.bW,app.bH,align='center',fill='white')
-        drawLabel(button,*app.buttons[button],size=16)
+def setup_redrawAll(app):
+    drawBackgroud(app)
+    drawCloud(app)
+    #drawRect(app.width/10,app.height/9,8*app.width/10,6*app.height/9,fill = 'white',opacity=40)
+    drawLabel('Welcome! Let\'s do some setup.', app.width/2,app.height/5,size=20,font=app.font,fill=app.textColor,bold=True)
+    drawButtons(app)
     if app.loading == True:
-        drawRect(app.width/2-50,5*app.height/6,100,10)
+        drawRect(app.width/2-50,6*app.height/7,100,10,fill=app.textColor)
         if app.loadCount>0:
-            drawRect(app.width/2-50,5*app.height/6,app.loadCount*20,10,fill='white')
+            drawRect(app.width/2-50,6*app.height/7,app.loadCount*20,10,fill='white')
     if app.message != None:
-        drawLabel(app.message,app.width/2,5*app.height/6 + 30)
+        drawLabel(app.message,app.width/2,6*app.height/7 + 30,size=17,font=app.font,fill=app.textColor)
     if app.message2 != None:
-        drawLabel(app.message2,app.width/2,4*app.height/5 + 30,size=16)
+        drawLabel(app.message2,app.width/2,4*app.height/5 + 30,size=20,font=app.font,fill=app.textColor)
 
-def splash_onMousePress(app,mouseX,mouseY):
-    for button in app.buttons:
-        buttonX = app.buttons[button][0]
-        buttonY = app.buttons[button][1]
-        if (buttonX-app.bW/2<mouseX<buttonX+app.bW/2 and 
-            buttonY-app.bH/2<mouseY<buttonY+app.bH/2):
-            pressButton(app,button)
+def checkButtonPress(app,mouseX,mouseY):
+    for butt in Button.butts:
+        if (butt.active == True and
+        butt.cx-butt.bw/2<mouseX<butt.cx+butt.bw/2 and 
+        butt.cy-butt.bh/2<mouseY<butt.cy+butt.bh/2 and
+        butt.screen == app.currScreen):
+            pressButton(app,butt)
+            print(f'pressed {butt} button')
 
-def pressButton(app,which):
-    if which == 'Noise':
-        app.loading = True
-        app.message = 'Recording 3 seconds of background noise...'
-        print('recording')
-        app.recorder.start()
-        app.measureNoise = True
-    #if which == 'Highest':
-    elif which == 'Start':
-        setActiveScreen('main')
-        app.recorder.end()
-    elif which == 'Highest':
-        app.message2 = 'Sing the highest note you can! Press Highest again to save.'
-        app.measureHigh = not app.measureHigh
-        if app.measureHigh:
-            app.recorder.start()
-        else:
-            app.recorder.pause()
-    elif which == 'Lowest':
-        app.message2 = 'Sing the lowest note you can! Press Lowest again to save.'
-        app.measureLow = not app.measureLow
-        if app.measureLow:
-            app.recorder.start()
-        else:
-            app.recorder.pause()
+def setup_onMousePress(app,mouseX,mouseY):
+    checkButtonPress(app,mouseX,mouseY)
+    #print('setup click')
 
-def splash_onStep(app):
-    if app.measureNoise == True:
-        if 2 * app.recorder.samplerate > len(app.recorder.temp):
-            app.loadCount = int(5*len(app.recorder.temp)/(2 * app.recorder.samplerate))
-            #print(len(app.temp))
-            app.recorder.processAudio()
-        else:
-            app.loading = False
+def setup_onMouseMove(app,mouseX,mouseY):
+    buttonHover(app,mouseX,mouseY)
+
+
+def setup_onStep(app):
+    if not app.paused:
+        Cloud.onStep(app)
+        for cloud in Cloud.onScreenList:
+                cloud.parameter[0]-=1
+                if cloud.parameter[0]<-200:
+                    Cloud.onScreenList.remove(cloud)
+        if app.cloud==True:
+            L=Cloud.CloudListGen(app)
+            app.cloud=False 
+            Cloud.upcomingList=L
+            Cloud.onScreenList.append(Cloud.upcomingList.pop(0))
+        if app.measureNoise == True:
             app.loadCount = 0
-            app.measureNoise = False
-            bgMag = abs(sum((app.recorder.temp)))/len(app.recorder.temp)
-            app.message = f'Your background noise is {bgMag} of some unit'
-            #print(bgMag)
-            #print("*** done recording")
-            app.recorder.updateNoise(bgMag)
-            app.recorder.pause()
-    if app.measureHigh == True:
-        app.recorder.processAudio()
-        if app.recorder.frames==4:
-            app.recorder.makeFft()
-            if len(app.recorder.pitchList)!=1:
-                highest = app.recorder.pitchList[-1]
-                app.message = f'Your highest pitch is {highest} Hz'
-                app.recorder.updateMaxPitch(highest)
-    if app.measureLow == True:
-        app.recorder.processAudio()
-        if app.recorder.frames==4:
-            app.recorder.makeFft()
-            if len(app.recorder.pitchList)!=1:
-                lowest = app.recorder.pitchList[-1]
-                app.message = f'Your lowest pitch is {lowest} Hz'
-                app.recorder.updateMinPitch(lowest)
+            if 2 * app.recorder.samplerate > len(app.recorder.temp):
+                app.loadCount = int(5*len(app.recorder.temp)/(2 * app.recorder.samplerate))
+                #print(len(app.temp))
+                app.recorder.processAudio()
+                app.recorder.magList.append(app.recorder.mag)
+                #print(app.recorder.magList)
+            else:
+                app.loading = False
+                app.loadCount = 0
+                app.measureNoise = False
+                bgMag = sum(app.recorder.magList)/len(app.recorder.magList)
+                #print(bgMag)
+                if bgMag >= Recording.noiseMag:
+                    app.message = f'Your background noise is {pythonRound(bgMag,3)} of some unit'
+                    Recording.updateNoise(bgMag)
+                else:
+                    app.message = 'No significant noise detected.'
+                #print(bgMag)
+                #print("*** done recording")
+                app.recorder.temp = []
+                if app.recorder.stream.is_active():
+                    app.recorder.pause()
+                activateButtons(app)
+        elif app.measureHigh == True:
+            app.recorder.processAudio()
+            if app.recorder.frames>=4:
+                app.recorder.makeFft()
+                if len(app.recorder.pitchList)>=1:
+                    highest = app.recorder.pitchList[-1]
+                    app.message = f'Your highest pitch is {highest} Hz'
+                    Recording.updateMaxPitch(highest)
+        elif app.measureLow == True:
+            app.recorder.processAudio()
+            if app.recorder.frames>=4:
+                app.recorder.makeFft()
+                if len(app.recorder.pitchList)>=1:
+                    lowest = app.recorder.pitchList[-1]
+                    app.message = f'Your lowest pitch is {lowest} Hz'
+                    Recording.updateMinPitch(lowest)
 
         
 
-def splash_onKeyPress(app, key):
+def setup_onKeyPress(app, key):
     if key == 's':
-        setActiveScreen('main')
+        setActiveScreen('play')
 
 
-######## splash screen
+######## setup screen
 
 def almostEqual(a,b):
     if abs(a-b)<=10:
@@ -127,15 +140,43 @@ def almostEqual(a,b):
     return False
 
 
-def main_onScreenStart(app):
-    app.stepsPerSecond = 20
+def play_onAppStart(app):
+    app.currScore = 0
     app.started=False
     app.paused = False
     app.timer=0
     app.timerDelay=1
     app.stepsPerSecond=44
+    
+    openImages(app)
+    
 
+    app.butts = set()
+    app.settings = Button('play','Set Up',5*app.width/7,4*app.height/5)
+    app.tutorial = Button('play','Tutorial',2*app.width/7,4*app.height/5)
+    #app.play = Button('play','Play')
+    app.butts.add(app.settings)
+    app.butts.add(app.tutorial)
+    app.butts.add(imgButton('play','Play',app.width/2,4*app.height/5,app.playButton,100,100))
+    
+    app.timerC=0
+    app.cloud=True
+    app.Introx=app.width/2
+    #app.pausex=app.width/2
+
+
+    app.bird=Bird(app.height/2)
+
+    app.recorder = Recording(app.height-50)
+    app.recorder.pause()
+
+def play_onScreenActivate(app):
+    app.currScreen = 'play'
+    print('play screen')
+
+def openImages(app):
     # bird and bug gifs animated by Zen Jitsajjappong (Andrew ID pjitsajj)
+    # All other images are mine
     app.birdClosedGif=loadAnimatedGif(app, 'images/bird_closed.gif')
     app.birdOpenGif=loadAnimatedGif(app, 'images/bird_open.gif')
     app.bugGif=loadAnimatedGif(app, 'images/bug.gif')
@@ -151,18 +192,8 @@ def main_onScreenStart(app):
     app.bg=CMUImage(Image.open('images/sky.png'))
     app.playButton=CMUImage(Image.open('images/play.png'))
     app.tweater1=CMUImage(Image.open('images/tweater.png'))
-    #app.cy=(Bird.rail)*app.height/14-app.height/28
     app.cloudImage=[app.cloud1,app.cloud2,app.cloud3,app.cloud4]
-    app.timerC=0
-    app.cloud=True
-    app.Introx=app.width/2
-    app.pausex=app.width/2
-    #app.open=False
 
-    app.bird=Bird(app.height/2)
-    #app.bird.bHeight = 
-
-    app.recorder2 = Recording(app.height-50)
 #####################Loading image################
 def loadAnimatedGif(app,path):
     pilImages = Image.open(path)
@@ -177,42 +208,122 @@ def loadAnimatedGif(app,path):
         cmuImages.append(CMUImage(pilImage))
     return cmuImages
 
-############player interface#############
-
-
 ############
-# main screen
+# play screen
 ############
 
 
-def main_redrawAll(app):
+def play_redrawAll(app):
     
     drawLine(app)
     drawBackgroud(app)
     drawCloud(app)
     drawTweater(app)
-    drawPause(app)
+    #drawPause(app)
+    drawButtons(app)
     drawBird(app)
     drawFood(app)
+    drawLabel(app.currScore,9*app.width/10,1*app.height/10,font=app.font,fill=app.textColor,size=25,bold=True)
     #drawblack(app)
 
 def splitScreen(app):
     
     app.Introx-=15
-    app.pausex+=15
-        
-def main_onMousePress(app,mouseX,mouseY):
-    cx=app.width/2
-    cy=4*app.height/5
-    
-    if app.started == False:
-        if cx-50<mouseX<cx+50 and cy-60<mouseY<cy+60:
-            app.started=True
-            Food.makeFoodList(app)
-            Food.onScreenList.append(Food.upcomingList.pop(0))
-            
+    for butt in app.butts:
+        if butt.screen == app.currScreen:
+            butt.cx+=15
 
-def main_onKeyPress(app,key):
+def moveElement(app):
+    tempcx = 0
+    tempcy = 0
+
+def deactivateButtons(app,title):
+    for butt in Button.butts:
+        if butt.title != title and butt.screen == app.currScreen:
+            butt.active = False
+
+def activateButtons(app):
+    for butt in Button.butts:
+        if butt.screen == app.currScreen:
+            butt.active = True
+
+def pressButton(app,which):
+    if which.title == 'Set Up':
+        setActiveScreen('setup')
+    elif which.title == 'Noise':
+        deactivateButtons(app,'Noise')
+        app.recorder.magList = []
+        app.loading = True
+        app.message2 = None
+        app.message = 'Recording 3 seconds of background noise...'
+        print('recording')
+        if not app.recorder.stream.is_active():
+                app.recorder.start()
+        app.measureNoise = True
+    elif which.title == 'Reset Noise Level':
+        Recording.noiseMag = 0.001
+        app.message = 'Noise magnitude has been reset.'
+        app.message2 = None
+    elif which.title == 'Done':
+        setActiveScreen('play')
+        deactivateButtons(app,'Done')
+        activateButtons(app)
+    elif which.title == 'Play':
+        app.started=True
+        if not app.recorder.stream.is_active():
+                app.recorder.start()
+        Food.makeFoodList(app)
+        Food.onScreenList.append(Food.upcomingList.pop(0))
+    elif which.title == 'Highest':
+        app.message = f'Your highest pitch is {int(Recording.maxPitch)} Hz'
+        app.message2 = 'Sing the highest note you can! Press Highest again to save.'
+        app.measureHigh = not app.measureHigh
+        print(app.measureHigh)
+        if app.measureHigh:
+            deactivateButtons(app,'Highest')
+            if not app.recorder.stream.is_active():
+                app.recorder.start()
+        else:
+            if app.recorder.stream.is_active():
+                activateButtons(app)
+                app.recorder.pause()
+                app.message = 'Saved new highest note'
+                app.message2 = None
+                #which.title += ':' + str(int(Recording.maxPitch))
+    elif which.title == 'Lowest':
+        app.message = f'Your lowest pitch is {int(Recording.minPitch)} Hz'
+        app.message2 = 'Sing the lowest note you can! Press Lowest again to save.'
+        app.measureLow = not app.measureLow
+        if app.measureLow:
+            deactivateButtons(app,'Lowest')
+            if not app.recorder.stream.is_active():
+                app.recorder.start()
+        else:
+            if app.recorder.stream.is_active():
+                activateButtons(app)
+                app.recorder.pause()
+                app.message = 'Saved new lowest note'
+                app.message2 = None
+                #which.title += ':' + str(int(Recording.minPitch))
+
+def play_onMousePress(app,mouseX,mouseY):
+    if app.currScreen == 'play':
+        checkButtonPress(app,mouseX,mouseY)
+
+def play_onMouseMove(app,mouseX,mouseY):
+    buttonHover(app,mouseX,mouseY)
+
+def buttonHover(app,mouseX,mouseY):
+    for butt in Button.butts:
+        if (butt.active == True and
+            butt.cx-butt.bw/2<mouseX<butt.cx+butt.bw/2 and 
+            butt.cy-butt.bh/2<mouseY<butt.cy+butt.bh/2):
+            #pressButton(app,button)
+            butt.scale = 110
+        else:
+            butt.scale = 100
+
+def play_onKeyPress(app,key):
     
     if key=="w":
         if Bird.rail>1: 
@@ -228,6 +339,10 @@ def main_onKeyPress(app,key):
     
     elif key == 'p':
         app.paused = not app.paused
+        if app.paused:
+            app.recorder.pause
+        else:
+            app.recorder.start
     elif key == 'q':
         print("*** done recording")
         app.stream.stop_stream()
@@ -235,7 +350,7 @@ def main_onKeyPress(app,key):
         app.p.terminate()
         app.quit()
 
-def main_onStep(app):
+def play_onStep(app):
     if not app.paused:
         Cloud.onStep(app)
         for cloud in Cloud.onScreenList:
@@ -254,10 +369,10 @@ def main_onStep(app):
             if app.Introx>-500:
                 splitScreen(app)
             eat(app)
-            app.recorder2.processAudio()
-            if app.recorder2.frames==4:
-                app.recorder2.makeFft()
-            if app.recorder2.mag >= Recording.noiseMag:
+            app.recorder.processAudio()
+            if app.recorder.frames>=4:
+                app.recorder.makeFft()
+            if app.recorder.mag >= Recording.noiseMag:
                 app.bird.openMouth()
             else:
                 app.bird.closeMouth()
@@ -278,10 +393,10 @@ def main_onStep(app):
             app.count3= (0.5 + app.count3) % len(app.bugGifFast)
             
 
-            #app.bird.cy = app.height-app.recorder2.getCastFreq()
+            #app.bird.cy = app.height-app.recorder.getCastFreq()
             moveSmooth(app)
-            #print(app.recorder2.pitchList[-1])
-            # cy = app.recorder2.pitchList[-1]
+            #print(app.recorder.pitchList[-1])
+            # cy = app.recorder.pitchList[-1]
             # if cy<180:
             #     app.bird.targetRrail=14
             # elif cy>430:
@@ -290,12 +405,12 @@ def main_onStep(app):
             #     app.bird.targetRrail=int(14-(((cy-180)/(app.height/14))+1))
             
             #put this in the audioClass
-            if len(app.recorder2.pitchList)>10:
-                app.recorder2.pitchList = app.recorder2.pitchList[-9:]
+            if len(app.recorder.pitchList)>10:
+                app.recorder.pitchList = app.recorder.pitchList[-9:]
         
 
 def moveSmooth(app):
-    target = app.height-app.recorder2.getCastFreq()
+    target = app.height-app.recorder.getCastFreq()
     for i in range(5):
         app.bird.cy += (target-app.bird.cy)/5
 
@@ -321,10 +436,25 @@ def eat(app):
             #         Food.onScreenList.remove(each)
                     
                 
-                
+def drawButtons(app):
+    for butt in Button.butts:
+        if butt.screen == app.currScreen:
+            if isinstance(butt,imgButton):
+                imgW, imgH = getImageSize(butt.img)
+                drawImage(butt.img, butt.cx, butt.cy, align='center',
+                width=imgW*butt.scale/100,height=imgH*butt.scale/100)
+            else:
+                if butt.active == False:
+                    drawLabel(butt.title,butt.cx,butt.cy,size=butt.fontSize*butt.scale/100,font=app.font,bold=True,fill=app.textColor,opacity=50)
+                else:
+                    
+                    #drawRect(butt.cx,butt.cy,butt.bw,butt.bh,align='center',fill=RGB(236,234,226))
+                    drawLabel(butt.title,butt.cx,butt.cy,size=butt.fontSize*butt.scale/100,font=app.font,bold=True,fill=app.textColor)
+            
+
 def drawTweater(app):
     cx=app.Introx
-    cy=2*app.height/5
+    cy=app.height/3
     #canvas.create_image(cx,cy,image=ImageTk.PhotoImage(app.tweater1))
     drawImage(app.tweater1, cx, cy, align='center')
     
@@ -406,7 +536,7 @@ def drawLine(app):
 
 
 def main():
-    runAppWithScreens(initialScreen='main', width=800,height=500)
+    runAppWithScreens(initialScreen='play', width=800,height=500)
 main()
 
     
