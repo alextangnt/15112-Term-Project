@@ -10,19 +10,6 @@ def almostEqual(a,b):
         return True
     return False
 
-def loadAnimatedGif(app,path):
-    pilImages = Image.open(path)
-    if pilImages.format != 'GIF':
-        raise Exception(f'{path} is not an animated image!')
-    if not pilImages.is_animated:
-        raise Exception(f'{path} is not an animated image!')
-    cmuImages = [ ]
-    for frame in range(pilImages.n_frames):
-        pilImages.seek(frame)
-        pilImage = pilImages.copy()
-        cmuImages.append(CMUImage(pilImage))
-    return cmuImages
-
 def checkButtonPress(app,mouseX,mouseY):
     for butt in Button.butts:
         if (butt.active == True and
@@ -41,13 +28,6 @@ def buttonHover(app,mouseX,mouseY):
             butt.scale = 110
         else:
             butt.scale = 100
-
-
-
-def moveSmooth(app):
-    target = app.height-app.recorder.getCastFreq()
-    for i in range(5):
-        app.bird.cy += (target-app.bird.cy)/5
 
 
 def movingStep(app):
@@ -77,23 +57,6 @@ def distance(l1,l2,c1,c2):
 
     return math.sqrt((l1-c1)**2+(l2-c2)**2)
 
-def eat(app):
-    
-    birdx=app.width/7-90
-    birdy=app.bird.cy-90
-    if Food.onScreenList!=[] and app.bird.mouthOpen == True:
-        for each in Food.onScreenList:
-            x0,y0,x1,y1=each.parameter
-
-            if x0<birdx<x1 and y0<birdy<y1:
-                Food.onScreenList.remove(each)
-                app.currScore+=1
-            # if abs(birdx-x0)<50:
-            #     if abs(birdy-y1)<50:
-            #         Food.onScreenList.remove(each)
-                    
-def loseLife(app):
-    app.birdAngle = (app.birdAngle+60)%720
 
 def openImages(app):
     # bird and bug gifs animated by Zen Jitsajjappong (Andrew ID pjitsajj)
@@ -102,19 +65,113 @@ def openImages(app):
     app.birdOpenGif=loadAnimatedGif(app, 'images/bird_open.gif')
     app.bugGif=loadAnimatedGif(app, 'images/bug.gif')
     app.bugGifFast=app.bugGif
+
+    app.birdClosedGif2=loadAlternateGif(app, 'images/bird_closed.gif')
+    app.birdOpenGif2=loadAlternateGif(app, 'images/bird_open.gif')
+    app.bugGif2=loadAlternateGif(app, 'images/bug.gif')
+
+    #keeping track of gif frames
     app.count0=0
     app.count1=0
     app.count2=0
     app.count3=0
-    app.cloud1=CMUImage(Image.open('images/cloud1.png'))
-    app.cloud2=CMUImage(Image.open('images/cloud2.png'))
-    app.cloud3=CMUImage(Image.open('images/cloud3.png'))
-    app.cloud4=CMUImage(Image.open('images/cloud4.png'))
-    app.bg=CMUImage(Image.open('images/sky.png'))
+    #app.cloud1=CMUImage(Image.open('images/cloud1.png'))
+    # app.cloud2=CMUImage(Image.open('images/cloud2.png'))
+    # app.cloud3=CMUImage(Image.open('images/cloud3.png'))
+    # app.cloud4=CMUImage(Image.open('images/cloud4.png'))
+    
+    app.cloudImages=[]
+    for image in ['images/cloud1.png','images/cloud2.png','images/cloud3.png','images/cloud4.png']:
+        cloudDict = dict()
+        cloudDict['base'] = Image.open(image)
+        cloudDict['sunset'] = editImage(cloudDict['base'],'set')
+        cloudDict['dark'] = editImage(cloudDict['base'],'blue')
+        cloudDict['base'] = CMUImage(cloudDict['base'])
+        cloudDict['sunset'] = CMUImage(cloudDict['sunset'])
+        cloudDict['dark'] = CMUImage(cloudDict['dark'])
+        app.cloudImages.append(cloudDict)
+
+
+    app.bg = dict()
+    app.bg['base']=Image.open('images/sky.png')
+    app.bg['sunset'] = editImage(app.bg['base'],'sunset')
+    app.bg['dark'] = editImage(app.bg['base'],'dark')
+    app.bg['base'] = CMUImage(app.bg['base'])
+    app.bg['sunset'] = CMUImage(app.bg['sunset'])
+    app.bg['dark'] = CMUImage(app.bg['dark'])
+
+
     app.playButton=CMUImage(Image.open('images/play.png'))
     app.tweater1=CMUImage(Image.open('images/tweater.png'))
     app.tweaterE = Element('home',app.width/2,app.height/3,'x')
-    app.cloudImage=[app.cloud1,app.cloud2,app.cloud3,app.cloud4]
+    # app.cloudImage=[app.cloud1,app.cloud2,app.cloud3,app.cloud4]
+    # app.cloudsetImage=[app.cloud1set,app.cloud2set,app.cloud3set,app.cloud4set]
+
+def loadAnimatedGif(app,path):
+    pilImages = Image.open(path)
+    if pilImages.format != 'GIF':
+        raise Exception(f'{path} is not an animated image!')
+    if not pilImages.is_animated:
+        raise Exception(f'{path} is not an animated image!')
+    cmuImages = [ ]
+    for frame in range(pilImages.n_frames):
+        pilImages.seek(frame)
+        pilImage = pilImages.copy()
+        cmuImages.append(CMUImage(pilImage))
+    return cmuImages
+
+def loadAlternateGif(app,path):
+    pilImages = Image.open(path)
+    if pilImages.format != 'GIF':
+        raise Exception(f'{path} is not an animated image!')
+    if not pilImages.is_animated:
+        raise Exception(f'{path} is not an animated image!')
+    cmuImages = [ ]
+    for frame in range(pilImages.n_frames):
+        pilImages.seek(frame)
+        pilImage = pilImages.copy()
+        pilImage = editImage(pilImage,'blue')
+        cmuImages.append(CMUImage(pilImage))
+    return cmuImages
+
+#from editing pixels demo         
+def editImage(sourceImage,setting):
+    # First, get the RGB version of the image so getpixel returns r,g,b values:
+    rgbImage = sourceImage.convert('RGBA')
+
+    # Now, a new image in the 'RGB' mode with same dimensions as app.image
+    newImage = Image.new(mode='RGBA', size=rgbImage.size)
+    for x in range(newImage.width):
+        for y in range(newImage.height):
+            r,g,b,a = rgbImage.getpixel((x,y))
+            #print(rgbImage.getpixel((0,0)))
+            if setting == 'set':
+                if [r,g,b,a] == [0,0,0,0]:
+                    newImage.putpixel((x,y),(0,0,0,0))
+                else:
+                    newImage.putpixel((x,y),(int(r/2),int(g/8),int(b/10),0))
+            if setting == 'sunset':
+                if [r,g,b,a] == [0,0,0,0]:
+                    newImage.putpixel((x,y),(0,0,0,0))
+                else:
+                    newImage.putpixel((x,y),(int(r*1.5),int(g*0.6),int(b*0.7),a))
+            elif setting == 'blue':
+                if [r,g,b,a] == [0,0,0,0]:
+                    newImage.putpixel((x,y),(0,0,0,0))
+                else:
+                    if r > 100 + g:
+                        newImage.putpixel((x,y),(int(r),int(g*0.9),min(255,b+20),a))
+                    else:
+                        newImage.putpixel((x,y),(int(r*0.5),int(g*0.9),min(255,b+20),a))
+            elif setting == 'dark':
+                if [r,g,b,a] == [0,0,0,0]:
+                    newImage.putpixel((x,y),(0,0,0,0))
+                else:
+                    if r > 100 + g:
+                        newImage.putpixel((x,y),(int(r*1.2),int(g*0.9),min(255,b+25),a))
+                    else:
+                        newImage.putpixel((x,y),(int(r*0.2),int(g*0.2),int(b*0.4),a))
+    return newImage
 
 def pressButton(app,which):
     if which.title == 'Set Up':
@@ -134,7 +191,7 @@ def pressButton(app,which):
         Recording.noiseMag = 0.003
         app.message = 'Noise magnitude has been reset.'
         app.message2 = None
-    elif which.title == 'Done':
+    elif which.title == 'Done' or which.title == 'Home':
         app.onOff = 'off'
         app.pendingScreen = 'home'
 

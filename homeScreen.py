@@ -13,6 +13,7 @@ from gameMethods import *
     
 
 def home_onScreenActivate(app):
+    app.paused = False
     app.onOff = 'on'
     app.pendingScreen = None
     app.currScreen = 'home'

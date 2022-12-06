@@ -48,12 +48,12 @@ def record():
             decoded = numpy.frombuffer(data, dtype='float32')
             mag = numpy.frombuffer(data, dtype='float32')
             temp.extend(decoded)
-            if len(temp)>=4096:
+            if len(temp)>=win_s:
                 transform = fft.doFft(temp)
                 #print(sum(abs(mag))/len(mag))
                 if sum(abs(mag))/len(mag)>=0:
-                    freq = getFreq(transform,buffer_size,samplerate)
-                    if freq!=None and int(freq) != 0 and 85 < freq < 3000:
+                    freq = getFreq(transform,win_s,samplerate)
+                    if freq!=None and int(freq) != 0:
                         #print(int(freq))
                         testing.append(int(freq))
                 temp = []       

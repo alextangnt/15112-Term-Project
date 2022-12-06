@@ -32,7 +32,7 @@ class AudioFile:
         data = self.wf.readframes(self.chunk)
         allData = []
         #while data != b'':
-        for i in range(50):
+        for i in range(100):
             self.stream.write(data)
             data = self.wf.readframes(self.chunk)
             
@@ -98,7 +98,7 @@ class AudioFile:
         newrng = []
         for i in rng:
             newrng.append(i/self.chunk*self.frameRate)
-        plt.plot(newrng[0:len(array)//2], pythag[0:len(array)//2])
+        plt.scatter(newrng[0:len(array)//2], pythag[0:len(array)//2])
         plt.ylabel('y')
         plt.xlabel('x')
         plt.show()

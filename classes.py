@@ -1,5 +1,6 @@
 import cmu_graphics
 import random
+import copy
 
 # Classes and original rail mechanic made by zilyuj, largely being restructured by me
 
@@ -24,10 +25,9 @@ class Food:
     
     def makeFood(app):
 
-        row=random.randint(1,7)
-        timeDelay=random.randint(20,40)
-        parameter=[app.width,(row-1)*(app.height/7),app.width+77,
-                (row-1)*(app.height/7)+88]
+        row=random.randrange(1,8)
+        timeDelay=random.randint(40,80)
+        parameter=[app.width,(row*(app.height-app.topBar)/8)+app.topBar]
         
         return Food(parameter,row,timeDelay)
 
@@ -157,7 +157,7 @@ class Element():
 
 class Button(Element):
     butts = set()
-    def __init__(self,screen,title,cx,cy,bw=100,bh=60,description='',active=True,fontSize=25):
+    def __init__(self,screen,title,cx,cy,bw=100,bh=40,description='',active=True,fontSize=25):
         super().__init__(screen,cx,cy,'x')
         self.screen = screen
         self.title = title
@@ -184,3 +184,98 @@ class imgButton(Button):
         super().__init__(screen,title,cx,cy,bw,bh,description)
         self.img = img
 
+
+class Conway():
+    #star generator based on Conway's Game of Life
+    def __init__(self,width,height):
+        self.boardCols = width
+        self.boardRows = height
+        #self.board = [[[]*width for i in range(height)]]
+        #self.liveCells = [(3,5),(4,6),(5,4),(5,5),(5,6)]
+        self.liveCells = set()
+        #self.cellToCount = dict()
+        self.prevCells = set()
+        self.prevCells2 = set()
+        self.generation = 0
+        self.tenGens = set()
+        self.cellToCount = Conway.step2(self)
+        #self.prevCellToCount = Conway.step2(self)
+    
+    def countLiveNeighbors(self,cell):
+        count = 0
+        cellRow, cellCol = cell[0],cell[1]
+        for row in [-1,0,1]:
+            for col in [-1,0,1]:
+                if (not (row==0 and col==0) and
+                    0 <= cellRow+row < self.boardRows and
+                    0 <= cellCol+col < self.boardCols and
+                    (cellRow+row,cellCol+col) in self.liveCells):
+                    count += 1
+                    
+        return count
+    
+    def step2(self):
+
+        
+        cellToCount = dict()
+        for cell in self.liveCells:
+            cellRow, cellCol = cell[0],cell[1]
+            for row in [-2,-1,0,1,2]:
+                for col in [-2,-1,0,1,2]:
+                    if (not (row==0 and col==0) and
+                        0 <= cellRow+row < self.boardRows and
+                        0 <= cellCol+col < self.boardCols):
+                        newCell = (cellRow+row,cellCol+col)
+                        cellToCount[newCell] = cellToCount.get(newCell,0)+1
+        return cellToCount
+        
+    
+    def step(self):
+        self.generation+=1
+        nextGen = set()
+        reduce = False
+        if len(self.liveCells)>700:
+            reduce = True
+            #count = Conway.countLiveNeighbors(self,cell)
+        for cell in self.cellToCount:
+            if cell in self.liveCells:
+                if self.cellToCount[cell] in [4]:
+                    if reduce:
+                        if bool(random.getrandbits(1)):
+                            nextGen.add(cell)
+                    else:
+                        nextGen.add(cell)
+            else:
+                if self.cellToCount[cell] in [4]:
+                    if reduce:
+                        if bool(random.getrandbits(1)):
+                            nextGen.add(cell)
+                    else:
+                        nextGen.add(cell)
+        #print(cellToCount)
+
+        self.tenGens = self.tenGens & self.liveCells
+        #print(self.tenGens)
+        self.prevCells2 = copy.copy(self.prevCells)
+        self.prevCells = copy.copy(self.liveCells)
+        self.liveCells = nextGen
+        if self.generation%10 == 0:
+            self.liveCells = nextGen-self.tenGens
+            self.tenGens = self.liveCells
+        self.cellToCount = Conway.step2(self)
+
+    def generateCells(self):
+        #count = random.randint(900,1000)
+        num = 30
+        for i in range(5):
+
+            seedx = random.randrange(num,self.boardRows-num)
+            seedy = random.randrange(num,self.boardCols-num)
+            for i in range(10):
+                x = random.randrange(-int(self.boardRows/num),int(self.boardRows/num))
+                y = random.randrange(-int(self.boardRows/num),int(self.boardRows/num))
+                if 0 < seedx+x < self.boardRows and 0 < seedy+y < self.boardCols:
+                    cell = (seedx+x,seedy+y)
+                    self.liveCells.add((cell))
+        self.cellToCount = Conway.step2(self)
+                    

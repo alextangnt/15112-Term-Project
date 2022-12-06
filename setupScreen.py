@@ -17,6 +17,7 @@ def setup_onAppStart(app):
 
 
 def setup_onScreenActivate(app):
+    app.paused = False
     app.onOff = 'on'
     #app.pendingScreen = None
     app.currScreen = 'setup'
@@ -97,7 +98,7 @@ def setup_onStep(app):
         elif app.measureHigh == True:
             app.recorder.processAudio()
             if app.recorder.frames>=4:
-                app.recorder.makeFft()
+                app.recorder.makeFft(4)
                 if len(app.recorder.pitchList)>=1:
                     highest = app.recorder.pitchList[-1]
                     app.message = f'Your highest pitch is {highest} Hz'
@@ -105,7 +106,7 @@ def setup_onStep(app):
         elif app.measureLow == True:
             app.recorder.processAudio()
             if app.recorder.frames>=4:
-                app.recorder.makeFft()
+                app.recorder.makeFft(4)
                 if len(app.recorder.pitchList)>=1:
                     lowest = app.recorder.pitchList[-1]
                     app.message = f'Your lowest pitch is {lowest} Hz'
@@ -115,5 +116,5 @@ def setup_onStep(app):
 
 def setup_onKeyPress(app, key):
     checkPause(key)
-    if key == 's':
+    if key == 'h':
         setActiveScreen('home')

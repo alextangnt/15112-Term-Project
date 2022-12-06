@@ -12,8 +12,8 @@ import copy
 
 class Recording():
     noiseMag = 0.003
-    minPitch = 500
-    maxPitch = 2000
+    minPitch = 100
+    maxPitch = 500
     def __init__(self, outputHeight = 500):
         self.outputHeight = outputHeight
         # initialise pyaudio
@@ -44,10 +44,10 @@ class Recording():
         return False
 
     @staticmethod
-    def getFreq(array, buffer_size, samplerate):
+    def getFreq(array, win_size, samplerate):
         def indexToFreq(val):
             index = array.index(val)
-            return index/buffer_size*samplerate
+            return index/win_size*samplerate
         array = array[0:len(array)//2]
         temp = []
         for i in array:
@@ -84,10 +84,10 @@ class Recording():
         self.mag = sum(abs(magList))/len(magList)
         self.temp.extend(decoded)
 
-    def makeFft(self):
+    def makeFft(self,window):
         transform = fft.doFft(self.temp)
         if self.mag>=self.noiseMag:
-            freq = self.getFreq(transform,self.buffer_size,self.samplerate)
+            freq = self.getFreq(transform,self.buffer_size*window,self.samplerate)
             if freq!=None and int(freq) != 0:
                 #print(int(freq))
 

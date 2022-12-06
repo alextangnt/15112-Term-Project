@@ -9,6 +9,10 @@ from drawMethods import *
 from gameMethods import *
 
 def onAppStart(app):
+    app.time = 0
+    app.timestamp = None
+    app.setMaxShapeCount(3000)
+    app.topBar = 30
     app.font = 'monospace'
     app.textColor = RGB(22,33,63)
     app.currScreen = 'start'
@@ -31,7 +35,8 @@ def onAppStart(app):
     app.butts.add(app.tutorial)
     app.butts.add(imgButton('home','play',app.width/2,4*app.height/5,app.playButton,100,100))
     app.overButton = Button('end','Restart',app.width/2,3.5*app.height/5)
-    
+    app.homeButton = Button('end','Home',app.width/2,4*app.height/5)
+
     app.timerC=0
     app.cloud=True
     #app.Introx=app.width/2
@@ -40,8 +45,9 @@ def onAppStart(app):
 
     app.bird=Bird(app.height/2)
 
-    app.recorder = Recording(app.height-50)
+    app.recorder = Recording(app.height-app.topBar)
     app.recorder.pause()
+    app.conway = Conway(app.height/2,app.width/2)
 
 
 def main():
