@@ -10,6 +10,7 @@ import numpy
 import fft
 import matplotlib.pyplot as plt
 import copy
+import math
 
 
 def record():
@@ -56,6 +57,7 @@ def record():
                     if freq!=None and int(freq) != 0:
                         #print(int(freq))
                         testing.append(int(freq))
+                        getNoteFreq(freq)
                 temp = []       
     except KeyboardInterrupt:
         print("Done recording")
@@ -136,9 +138,25 @@ def getFreq(array,buffer_size,samplerate):
             frequencies.append(tempFreq)
 
     if frequencies != []:
-        print(sorted(frequencies))
+        #print(sorted(frequencies))
         return min(frequencies)
+    
+def getNoteFreq(freq):
+    startingFreq = 196.00
+    g3 = 196.00
+    a3 = 220.65
+    b3 = 246.94
+    c4 = 261.63
+    d4 = 293.66
 
+    # using the formula Freq = note x 2^N/12 from
+    # http://techlib.com/reference/musical_note_frequencies.htm#:~:text=Starting%20at%20any%20note%20the,be%20positive%2C%20negative%20or%20zero.
+    #freq = self.pitchList[-1]
+    note = startingFreq
+    N = freq/note
+    N = 12*math.log(N)/math.log(2)
+    print(N)
+    return N
 
 def almostEqual(a,b,round):
     if abs(a-b)<=round:

@@ -9,11 +9,13 @@ import fft
 import pyaudio
 import numpy as np
 import copy
+import math
 
 class Recording():
     noiseMag = 0.003
     minPitch = 100
     maxPitch = 500
+    startingFreq = 196.00
     def __init__(self, outputHeight = 500):
         self.outputHeight = outputHeight
         # initialise pyaudio
@@ -101,6 +103,26 @@ class Recording():
             castedVal = self.outputHeight
         return castedVal
         #print(int(freq),int(castedVal))
+
+    def getNoteFreq(self):
+        castedVal = (self.pitchList[-1]-self.minPitch)/(self.maxPitch-self.minPitch)*self.outputHeight
+        if castedVal > self.outputHeight:
+            castedVal = self.outputHeight
+        g3 = 196.00
+        a3 = 220.65
+        b3 = 246.94
+        c4 = 261.63
+        d4 = 293.66
+
+        # using the formula Freq = note x 2^N/12 from
+        # http://techlib.com/reference/musical_note_frequencies.htm#:~:text=Starting%20at%20any%20note%20the,be%20positive%2C%20negative%20or%20zero.
+        N = self.pitchList[-1]/Recording.startingFreq
+        N = 2^N/12
+
+        
+        return castedVal
+        #print(int(freq),int(castedVal))
+
 
     @classmethod
     def updateNoise(self,noise):

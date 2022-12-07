@@ -25,9 +25,11 @@ def buttonHover(app,mouseX,mouseY):
             butt.cx-butt.bw/2<mouseX<butt.cx+butt.bw/2 and 
             butt.cy-butt.bh/2<mouseY<butt.cy+butt.bh/2):
             #pressButton(app,button)
+            butt.hovered = True
             butt.scale = 110
         else:
             butt.scale = 100
+            butt.hovered = False
 
 
 def movingStep(app):
@@ -44,7 +46,7 @@ def movingStep(app):
                 #     setActiveScreen(app.pendingScreen)
 
 def checkPause(key):
-    if key == 'p':
+    if key == 'p' or key == 'esc':
         app.paused = not app.paused
         if app.paused:
             if app.recorder.stream.is_active():
@@ -104,8 +106,6 @@ def openImages(app):
     app.playButton=CMUImage(Image.open('images/play.png'))
     app.tweater1=CMUImage(Image.open('images/tweater.png'))
     app.tweaterE = Element('home',app.width/2,app.height/3,'x')
-    # app.cloudImage=[app.cloud1,app.cloud2,app.cloud3,app.cloud4]
-    # app.cloudsetImage=[app.cloud1set,app.cloud2set,app.cloud3set,app.cloud4set]
 
 def loadAnimatedGif(app,path):
     pilImages = Image.open(path)
@@ -154,7 +154,7 @@ def editImage(sourceImage,setting):
                 if [r,g,b,a] == [0,0,0,0]:
                     newImage.putpixel((x,y),(0,0,0,0))
                 else:
-                    newImage.putpixel((x,y),(int(r*1.5),int(g*0.6),int(b*0.7),a))
+                    newImage.putpixel((x,y),(int(r*1.4),int(g*0.7),int(b*0.4),a))
             elif setting == 'blue':
                 if [r,g,b,a] == [0,0,0,0]:
                     newImage.putpixel((x,y),(0,0,0,0))
@@ -167,10 +167,8 @@ def editImage(sourceImage,setting):
                 if [r,g,b,a] == [0,0,0,0]:
                     newImage.putpixel((x,y),(0,0,0,0))
                 else:
-                    if r > 100 + g:
-                        newImage.putpixel((x,y),(int(r*1.2),int(g*0.9),min(255,b+25),a))
-                    else:
-                        newImage.putpixel((x,y),(int(r*0.2),int(g*0.2),int(b*0.4),a))
+                    newImage.putpixel((x,y),(int(r*0.4*(r-b)/25),int(g*0.2*(g-b)/13),int(b*0.3),a))
+                
     return newImage
 
 def pressButton(app,which):
@@ -194,7 +192,8 @@ def pressButton(app,which):
     elif which.title == 'Done' or which.title == 'Home':
         app.onOff = 'off'
         app.pendingScreen = 'home'
-
+    elif which.title == 'continue':
+        app.paused = not app.paused
     elif which.title == 'play':
         app.started=True
         if not app.recorder.stream.is_active():

@@ -7,12 +7,15 @@ from gameMethods import *
 
 
 def play_onScreenActivate(app):
+    app.cloud=True
+    app.starColors = [(230, 80, 123),(240, 178, 55),(199, 237, 47),(47, 237, 155),(177, 120, 240)]
     app.textColor = RGB(22,33,63)
-    app.timestamp = None
-    app.events = {'sunset':None,
+    app.ingameColor = RGB(22,33,63)
+    app.events = {'sunset':0,
                 'dark':None,
                 'sunrise':None,
                 'day':None}
+    app.currEvent = 'sunset'
     app.time = 0
     app.paused = False
     app.lines = False
@@ -24,7 +27,7 @@ def play_onScreenActivate(app):
     app.scoreE = Element('play',7.5*app.width/10,1*app.height/15,'y')
     app.scoreE.goOff()
     app.currLives = 5
-    app.livesE = Element('play',6*app.width/10,1*app.height/15,'y')
+    app.livesE = Element('play',1*app.width/2,1*app.height/15,'y')
     app.livesE.goOff()
     app.infinite = False
     if not app.recorder.stream.is_active():
@@ -32,10 +35,12 @@ def play_onScreenActivate(app):
     app.gameOver = False
     app.overButton.goOn()
     app.homeButton.goOn()
+    app.continueButton.goOn()
     app.birdAngle = 0
     Food.onScreenList = []
     Food.makeFoodList(app)
     Food.onScreenList.append(Food.upcomingList.pop(0))
+    app.conway.reset()
 
 def play_onKeyPress(app,key):
     checkPause(key)
@@ -58,32 +63,67 @@ def play_redrawAll(app):
     
     drawBackground(app)
     #drawSky(app)
-    #drawConway(app)
+    drawConway(app)
     drawCloud(app)
     
     drawBird(app)
     drawFood(app)
-    #drawFilter(app)
+    drawFilter(app)
     drawScore(app)
     if app.lines:
         drawLines(app)
     if app.gameOver:
         drawRect(0,0,app.width,app.height,fill='white',opacity=30)
         #drawRect(app.width/10,app.height/9,8*app.width/10,6*app.height/9,fill = 'white',opacity=40)
-        drawLabel('YOU LOST SUCKERRRRRRR',app.width/2,app.height/2,font=app.font,size=50,fill=app.textColor,bold=True)
+        drawLabel('Game over!',app.width/2,app.height/2,font=app.font,size=50,fill=app.textColor,bold=True)
+        drawLabel(f'Score: {app.currScore}  Highest Score: {max(app.scores)}',app.width/2,app.height*0.6,font=app.font,size=30,fill=app.textColor,bold=True)
         drawButtons(app)
     if app.paused:
         drawRect(0,0,app.width,app.height,fill='white',opacity=30)
         drawLabel('Paused Game',app.width/2,app.height/2,font=app.font,size=50,fill=app.textColor,bold=True)
         drawButtons(app)
     
-
+def eventCheck(app):
+    events = ['sunset','dark','sunrise','day']
+    nextIndex = (events.index(app.currEvent)+1)%4
+    event = events[nextIndex]
+    #print(event,app.currEvent)
+    if event == 'sunset' and app.currEvent == 'day':
+        if app.events['day'] == None:
+            time = 0
+        else:
+            time = app.events['day']
+        if len(app.conway.liveCells) > 300 and app.time-time>100:
+            app.events['sunset'] = app.time
+            return event
+        return app.currEvent
+    elif event == 'dark' and app.currEvent == 'sunset':
+        if len(app.conway.liveCells) > 500 and app.time-app.events['sunset']>100:
+            app.events['dark'] = app.time
+            return event
+        return app.currEvent
+    elif event == 'sunrise' and app.currEvent == 'dark':
+        if len(app.conway.liveCells) < 200 and app.time-app.events['dark']>100:
+            app.events['sunrise'] = app.time
+            return event
+        return app.currEvent
+    elif event == 'day' and app.currEvent == 'sunrise':
+        if len(app.conway.liveCells) < 100 and app.time-app.events['sunrise']>100:
+            app.events['day'] = app.time
+            return event
+        return app.currEvent
+    return app.currEvent
+    # app.events = {'sunset':None,
+    #         'dark':None,
+    #         'sunrise':None,
+    #         'day':None}
 
 def play_onStep(app):
     if app.gameOver:
         app.currScreen = 'end'
         #app.overButton.goOn()
-        #app.homeButton.goOn()
+        app.continueButton.goOff()
+        app.scores.append(app.currScore)
         movingStep(app)
     if app.paused:
         app.currScreen = 'end'
@@ -92,17 +132,21 @@ def play_onStep(app):
         movingStep(app)
     if not app.paused and not app.gameOver:
         app.time += 1
-        if app.conway.liveCells == set() or len(app.conway.liveCells)<50:
-            app.conway.generateCells()
+        # if app.conway.liveCells == set() or len(app.conway.liveCells)<50:
+        #     app.conway.generateCells()
         app.conway.step()
-        if app.timestamp == None and len(app.conway.liveCells) >300:
-            app.timestamp = app.time
-        if app.timestamp != None:
-            interval = app.time-app.timestamp
+        # if app.events['sunset'] == None and len(app.conway.liveCells) >300:
+        #     app.timestamp = app.time
+        app.currEvent = eventCheck(app)
+        if app.currEvent == 'dark':
+            interval = app.time-app.events['dark']
             #print(interval)
-            app.textColor = RGB(min(180,22+interval*2),min(200,33+interval*2),min(210,63+interval*2))
+            app.ingameColor = RGB(min(180,22+interval*2),min(200,33+interval*2),min(210,63+interval*2))
             #app.textcolor = RGB(200,60,150)
             #if len(app.conway.liveCells) <300:
+        elif app.currEvent == 'sunrise':
+            interval = app.time-app.events['sunrise']
+            app.ingameColor = RGB(max(22,180-interval*2),max(33,200-interval*2),max(63,210-interval*2))
 
         if app.birdAngle!=0:
             loseLife(app)
@@ -115,7 +159,7 @@ def play_onStep(app):
             app.gameOver = True
         for cloud in Cloud.onScreenList:
                 cloud.parameter[0]-=1
-                if cloud.parameter[0]<-200:
+                if cloud.parameter[0]<-300:
                     Cloud.onScreenList.remove(cloud)
         if app.cloud==True:
             L=Cloud.CloudListGen(app)
@@ -130,9 +174,11 @@ def play_onStep(app):
             app.recorder.makeFft(4)
         if app.recorder.mag >= Recording.noiseMag:
             app.bird.openMouth()
+            magnum = int(app.recorder.mag*100)
+            app.conway.generateLocation((app.recorder.mag/Recording.noiseMag)*app.width/50,app.bird.cy,magnum)
+            #print((app.recorder.mag/Recording.noiseMag)*app.width/10)
         else:
             app.bird.closeMouth()
-        
         #moveRail(app)
         for food in Food.onScreenList:
             food.parameter[0]-=4
