@@ -7,6 +7,8 @@
 
 import fft
 import pyaudio
+# using wave to read wav files
+import wave
 import numpy as np
 import copy
 import math
@@ -16,13 +18,14 @@ class Recording():
     minPitch = 100
     maxPitch = 500
     startingFreq = 196.00
-    def __init__(self, outputHeight = 500):
+    def __init__(self, outputHeight = 500,file=None):
         self.outputHeight = outputHeight
+        
         # initialise pyaudio
         self.p = pyaudio.PyAudio()
+        self.buffer_size = 1024
 
         # open stream
-        self.buffer_size = 1024
         pyaudio_format = pyaudio.paFloat32
         n_channels = 1
         self.samplerate = 44000
@@ -39,6 +42,26 @@ class Recording():
         self.pitchList = [outputHeight/2]
         self.magList = []
     
+    def readFile(self):
+        data = self.wf.readframes(self.buffer_size)
+        while len(data):
+            #self.stream.write(data)
+            self.frames+=1
+            decoded = np.frombuffer(data, dtype='int'+str(self.format))
+            magList = np.frombuffer(data, dtype='int'+str(self.format))
+            self.mag = sum(abs(magList))/len(magList)
+            self.temp.extend(decoded)
+            data = self.wf.readframes(self.buffer_size)
+
+    def interpretFile(self):
+        size = len(self.temp)
+        n = self.buffer_size
+        for i in range(0, size, n):
+            chunk = self.temp[i:i + n]
+            freq = Recording.getFreq(chunk, n, 44000)
+            if freq != None:
+               self.pitchList.append(int(freq))
+
     @staticmethod
     def almostEqual(a,b,round):
         if abs(a-b)<=round:
@@ -161,3 +184,9 @@ class Recording():
         self.stream.stop_stream()
         self.stream.close()
         self.p.terminate()
+
+# recorder = Recording(file = 'songs/AUNTRODY.wav')
+# recorder.readFile()
+# recorder.interpretFile()
+
+# print(len(recorder.pitchList))

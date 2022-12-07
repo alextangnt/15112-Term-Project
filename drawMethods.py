@@ -13,7 +13,6 @@ def drawScore(app):
     drawLabel(f'Score: {app.currScore}',scx,scy,font=app.font,fill=app.ingameColor,size=25,bold=True,align='left')
     if not app.infinite and not app.mode == 'sing':
         drawLabel(app.currLives*'<3',lcx,lcy,font=app.font,fill=app.ingameColor,size=25,align='left')
-    #drawLabel('Score:',cx-90,cy,fill=app.textColor,size=25,bold=True,font=app.font)
 
 
 def drawButtons(app):
@@ -77,12 +76,6 @@ def drawBackground(app):
 
 
 def drawConway(app):
-    
-    # allcells = []
-    # for cell in app.conway.liveCells:
-    #     allcells.append(cell[0])
-    #     allcells.append(cell[1])
-    # drawPolygon(*allcells,fill=RGB(247, 239, 218),border = None,opacity=30)
     conwayDraw = Image.new('RGBA', (app.width, app.height),None)
     conwayDraw = CMUImage(conwayDraw)
     pilImage = conwayDraw.image
@@ -94,17 +87,13 @@ def drawConway(app):
         x,y = cell[0],cell[1]
         if app.currEvent == 'dark':
             draw.ellipse((x-1, y-1, x+1, y+1), fill = app.starColors[int(app.time/5)%5])
-        # else:
-        #     draw.ellipse((x-2, y-2, x+2, y+2), fill = (219, 209, 200))
     for cell in app.conway.liveCells:
         x,y = cell[0],cell[1]
         if app.currEvent == 'dark':
             draw.ellipse((x-1, y-1, x+1, y+1), fill = (219, 209, 200),outline=1)
         else:
             draw.ellipse((x-1, y-1, x+1, y+1), fill = (219, 209, 200),)
-        # drawCircle(cell[0]*2,cell[1]*2,2,
-        #         fill=RGB(247, 239, 218),border = None,opacity=30)
-
+   
     # Store the updated CMUImage
     conwayDraw = CMUImage(pilImage)
     if app.currEvent == 'dark':
@@ -117,11 +106,8 @@ def drawConway(app):
                 height=pilImage.height)
 
 def drawBird(app):
-    #rail=Bird.rail
     cx=app.width/7
     cy=app.bird.cy
-    
-    r=30
     closed = app.birdClosedGif[int(app.count0)]
     open = app.birdOpenGif[int(app.count1)]
     closeddark = app.birdClosedGif2[int(app.count0)]
@@ -193,7 +179,7 @@ def drawFood(app):
             boostbug = app.boostBugGif[int(app.count2)]
             if each.evil:
                 drawImage(evilbug, cx, cy, align='center')
-            elif each.boost or each.ender:
+            elif each.boost:
                 drawImage(boostbug, cx, cy, align='center')
             elif each.fast:
                 if app.currEvent == 'dark':
@@ -224,9 +210,10 @@ def drawFood(app):
 
     
 def drawLines(app):
-    
+    notes = ['G4','F4','E4','D4','C4','B3','A3','G3']
     for i in range(1,9):
         drawLine(0,(app.height-app.topBar)*(i/9)+app.topBar,app.width,(app.height-app.topBar)*(i/9)+app.topBar,fill=app.ingameColor,opacity=35)
+        drawLabel(notes[i-1],30,(app.height-app.topBar)*(i/9)+app.topBar-13,fill=app.ingameColor,opacity=70,size=16,font=app.font,bold=True)
 
 def drawFilter(app):
     if app.currEvent == 'sunset':

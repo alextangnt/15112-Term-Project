@@ -14,7 +14,6 @@ def modes_onAppStart(app):
             Button('modes','Easy',4*app.width/5,app.height/2-90),
             Button('modes','Infinite',app.width/2,app.height/2),
             Button('modes','Done',app.width/2,3.7*app.height/5)}
-    print(Button.butts)
     app.bW,app.bH = 60,30
 
 
@@ -25,6 +24,7 @@ def modes_onScreenActivate(app):
     app.currScreen = 'modes'
     app.message = None
     app.message2 = None
+    app.cloud=True
     
 def modes_redrawAll(app):
     drawBackground(app)

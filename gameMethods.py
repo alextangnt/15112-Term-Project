@@ -219,7 +219,7 @@ def pressButton(app,which):
         app.loading = True
         app.message2 = None
         app.message = 'Recording 3 seconds of background noise...'
-        print('recording')
+        #print('recording')
         if not app.recorder.stream.is_active():
                 app.recorder.start()
         app.measureNoise = True
@@ -230,9 +230,8 @@ def pressButton(app,which):
     elif which.title == 'Done' or which.title == 'Home':
         app.onOff = 'off'
         app.pendingScreen = 'home'
-        
-    elif which.title == 'continue':
-        app.paused = not app.paused
+    elif which.title == 'Continue':
+        app.paused = False
     elif which.title == 'play':
         app.started=True
         if not app.recorder.stream.is_active():
@@ -245,7 +244,7 @@ def pressButton(app,which):
         app.message = f'Your highest pitch is {int(Recording.maxPitch)} Hz'
         app.message2 = 'Sing the highest note you can! Press Highest again to save.'
         app.measureHigh = not app.measureHigh
-        print(app.measureHigh)
+        #print(app.measureHigh)
         if app.measureHigh:
             deactivateButtons(app,'Highest')
             if not app.recorder.stream.is_active():

@@ -22,7 +22,7 @@ def play_onScreenActivate(app):
     app.lines = False
     app.onOff = 'on'
     app.pendingScreen = None
-    print('play screen')
+    #print('play screen')
     app.currScreen = 'play'
     app.currScore = 0
     app.scoreE = Element('play',7.5*app.width/10,1*app.height/15,'y')
@@ -40,7 +40,7 @@ def play_onScreenActivate(app):
     app.birdAngle = 0
     app.speed = 1
     app.songOver = False
-
+    Food.delay = 40
     #timer for food and clouds
     app.timer=0
     app.timerDelay=1
@@ -60,6 +60,8 @@ def play_onScreenActivate(app):
         Food.delay = 20
         Food.makeFoodList(app)
     else:
+        Food.delay = 20
+        app.speed = 2
         Food.makeTwinkle(app)
     Food.onScreenList.append(Food.upcomingList.pop(0))
     app.conway.reset()
@@ -68,7 +70,7 @@ def play_onKeyPress(app,key):
     checkPause(key)
     if key == 'l':
         app.lines = not app.lines
-        print('lines')
+        #print('lines')
     elif key == 'r':
         setActiveScreen('play')
     elif key == 's':
@@ -141,10 +143,6 @@ def eventCheck(app):
             return event
         return app.currEvent
     return app.currEvent
-    # app.events = {'sunset':None,
-    #         'dark':None,
-    #         'sunrise':None,
-    #         'day':None}
 
 def play_onStep(app):
     if app.gameOver:
@@ -163,8 +161,6 @@ def play_onStep(app):
         if not app.mode == 'sing':
             app.speed += 0.00001
             Food.delay = max(1,Food.delay-0.00001)
-        # if app.conway.liveCells == set() or len(app.conway.liveCells)<50:
-        #     app.conway.generateCells()
         app.conway.step()
         app.currEvent = eventCheck(app)
         if app.currEvent == 'dark':
@@ -197,10 +193,10 @@ def play_onStep(app):
             Cloud.upcomingList=L
             Cloud.onScreenList.append(Cloud.upcomingList.pop(0))
         if Food.upcomingList == []:
-            if app.mode == 'sing':
-                app.over = True
-            else:
+            if not app.mode == 'sing':
                 Food.makeFoodList(app)
+            if Food.onScreenList == [] and app.mode == 'sing':
+                app.gameOver = True
         eat(app)
         app.recorder.processAudio()
 
@@ -220,9 +216,6 @@ def play_onStep(app):
             food.parameter[0]-=4*app.speed
             if food.parameter[0]+44<0:
                 Food.onScreenList.remove(food)
-                if food.ender:
-                    app.gameOver = True
-                    app.songOver = True
                 if not app.infinite and not food.evil and not app.mode == 'sing':
                     app.currLives-=1
                     app.speed*=0.4
@@ -249,10 +242,10 @@ def moveSmooth(app):
         #print(app.recorder.getNoteFreq())
     else:
         target = app.height-app.recorder.getCastFreq()+app.topBar
-    # if target < 50:
-    #     target = 50
-    # elif target > app.height-50:
-    #     target = app.height-50
+        if target < 50:
+            target = 50
+        elif target > app.height-50:
+            target = app.height-50
     for i in range(5):
         app.bird.cy += (target-app.bird.cy)/5
 
@@ -275,18 +268,15 @@ def eat(app):
                     loseLife(app)
                 elif app.bird.mouthOpen == True:
                     Food.onScreenList.remove(each)
-                    if each.ender:
-                        app.gameOver = True
-                        app.songOver = True
-                    elif each.boost:
+                    if each.boost:
                         app.currScore+=5
                         app.speed*=1.4
                         if app.currLives<5:
                             app.currLives+=1
                     else:
                         app.currScore+=1
-                        if not app.mode == 'sing':
-                            app.speed*=1.05
+                        #if not app.mode == 'sing':
+                            #app.speed*=1.05
 
                     
 def loseLife(app):

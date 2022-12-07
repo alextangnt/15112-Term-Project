@@ -214,29 +214,13 @@ class Conway():
     def __init__(self,width,height):
         self.width = width
         self.height = height
-        #self.board = [[[]*width for i in range(height)]]
-        #self.liveCells = [(3,5),(4,6),(5,4),(5,5),(5,6)]
         self.liveCells = set()
-        #self.cellToCount = dict()
         self.prevCells = set()
         self.prevCells2 = set()
         self.generation = 0
         self.tenGens = set()
         self.cellToCount = Conway.step2(self)
-        #self.prevCellToCount = Conway.step2(self)
     
-    def countLiveNeighbors(self,cell):
-        count = 0
-        cellX, cellY = cell[0],cell[1]
-        for x in [-1,0,1]:
-            for y in [-1,0,1]:
-                if (not (x==0 and y==0) and
-                    0 <= cellX+x < self.width and
-                    0 <= cellY+y < self.height and
-                    (cellX+x,cellY+y) in self.liveCells):
-                    count += 1
-                    
-        return count
     
     def step2(self):
         cellToCount = dict()
@@ -258,7 +242,6 @@ class Conway():
         reduce = False
         if len(self.liveCells)>1500:
             reduce = True
-            #count = Conway.countLiveNeighbors(self,cell)
         for cell in self.cellToCount:
             if cell in self.liveCells:
                 if self.cellToCount[cell] in [4]:
@@ -274,10 +257,7 @@ class Conway():
                             nextGen.add(cell)
                     else:
                         nextGen.add(cell)
-        #print(cellToCount)
-
         self.tenGens = self.tenGens & self.liveCells
-        #print(self.tenGens)
         self.prevCells2 = copy.copy(self.prevCells)
         self.prevCells = copy.copy(self.liveCells)
         self.liveCells = nextGen
@@ -301,7 +281,6 @@ class Conway():
         self.cellToCount = Conway.step2(self)
 
     def generateLocation(self,seedx,seedy,magnum):
-        #print(seedy,magnum)
         seedx = int(seedx)
         seedy = int(seedy)
         for i in range(magnum):

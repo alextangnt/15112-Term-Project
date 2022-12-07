@@ -28,7 +28,7 @@ def record():
                     input=True,
                     frames_per_buffer=buffer_size)
 
-    print("Start recording")
+    #print("Start recording")
 
     frames = []
 
@@ -56,8 +56,8 @@ def record():
                     freq = getFreq(transform,win_s,samplerate)
                     if freq!=None and int(freq) != 0:
                         #print(int(freq))
-                        #testing.append(int(freq))
-                        testing.append(getNoteFreq(freq))
+                        testing.append(int(freq))
+                        #testing.append(getNoteFreq(freq))
                 temp = []       
     except KeyboardInterrupt:
         print("Done recording")
@@ -138,7 +138,7 @@ def getFreq(array,buffer_size,samplerate):
             frequencies.append(tempFreq)
 
     if frequencies != []:
-        #print(sorted(frequencies))
+        print(sorted(frequencies))
         return min(frequencies)
     
 def getNoteFreq(freq):

@@ -18,6 +18,7 @@ def home_onScreenActivate(app):
     app.pendingScreen = None
     app.currScreen = 'home'
     print('home screen')
+    app.cloud = True
 
 #####################Loading image################
 
@@ -28,16 +29,12 @@ def home_onScreenActivate(app):
 
 
 def home_redrawAll(app):
-    
-    #drawLine(app)
     drawBackground(app)
     drawCloud(app)
     drawTweater(app)
-    #drawPause(app)
     drawButtons(app)
     #drawBird(app)
     #drawFood(app)
-    #drawblack(app)
 
     
 def splitScreen(app):
@@ -47,7 +44,6 @@ def splitScreen(app):
             butt.cx+=15
 
 
-#def pending()
 
             
 
@@ -74,7 +70,7 @@ def home_onKeyPress(app,key):
             app.bird.targetRrail=False
             app.cy=(Bird.rail)*app.height/14-app.height/28
     elif key == 'q':
-        print("*** done recording")
+        #print("*** done recording")
         app.stream.stop_stream()
         app.stream.close()
         app.p.terminate()
@@ -96,48 +92,3 @@ def home_onStep(app):
             app.cloud=False 
             Cloud.upcomingList=L
             Cloud.onScreenList.append(Cloud.upcomingList.pop(0))
-
-
-        # if app.started:
-        #     if app.Introx>-500:
-        #         splitScreen(app)
-        #     eat(app)
-        #     app.recorder.processAudio()
-        #     if app.recorder.frames>=4:
-        #         app.recorder.makeFft()
-        #     if app.recorder.mag >= Recording.noiseMag:
-        #         app.bird.openMouth()
-        #     else:
-        #         app.bird.closeMouth()
-            
-        #     #moveRail(app)
-        #     for food in Food.onScreenList:
-        #         food.parameter[0]-=4
-        #         food.parameter[2]-=4
-        #         if food.parameter[2]<-200:
-        #             Food.onScreenList.remove(food)
-
-        #     Food.onStep(app)
-            
-
-        #     app.count0= (0.5 + app.count0) % len(app.birdClosedGif)
-        #     app.count1= (0.5 + app.count1) % len(app.birdOpenGif)
-        #     app.count2= (0.25 + app.count2) % len(app.bugGif)
-        #     app.count3= (0.5 + app.count3) % len(app.bugGifFast)
-            
-
-        #     #app.bird.cy = app.height-app.recorder.getCastFreq()
-        #     moveSmooth(app)
-        #     #print(app.recorder.pitchList[-1])
-        #     # cy = app.recorder.pitchList[-1]
-        #     # if cy<180:
-        #     #     app.bird.targetRrail=14
-        #     # elif cy>430:
-        #     #     app.bird.targetRrail=1
-        #     # else:
-        #     #     app.bird.targetRrail=int(14-(((cy-180)/(app.height/14))+1))
-            
-        #     #put this in the audioClass
-        #     if len(app.recorder.pitchList)>10:
-        #         app.recorder.pitchList = app.recorder.pitchList[-9:]
-

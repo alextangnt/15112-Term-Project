@@ -14,6 +14,8 @@ def setup_onAppStart(app):
             Button('setup','Highest',4*app.width/5,app.height/2-30),
             Button('setup','Done',app.width/2,3.5*app.height/5)}
     app.bW,app.bH = 60,30
+    app.message = None
+    app.message2 = None
 
 
 def setup_onScreenActivate(app):
@@ -30,6 +32,7 @@ def setup_onScreenActivate(app):
     app.measureLow = False
     if app.recorder.stream.is_active():
         app.recorder.pause()
+    app.cloud = True
 
 def setup_redrawAll(app):
     drawBackground(app)
@@ -74,23 +77,18 @@ def setup_onStep(app):
             app.loadCount = 0
             if 2 * app.recorder.samplerate > len(app.recorder.temp):
                 app.loadCount = int(5*len(app.recorder.temp)/(2 * app.recorder.samplerate))
-                #print(len(app.temp))
                 app.recorder.processAudio()
                 app.recorder.magList.append(app.recorder.mag)
-                #print(app.recorder.magList)
             else:
                 app.loading = False
                 app.loadCount = 0
                 app.measureNoise = False
                 bgMag = sum(app.recorder.magList)/len(app.recorder.magList)
-                #print(bgMag)
                 if bgMag >= Recording.noiseMag:
                     app.message = f'Your background noise is {pythonRound(bgMag,3)} of some unit'
                     Recording.updateNoise(bgMag)
                 else:
                     app.message = 'No significant noise detected.'
-                #print(bgMag)
-                #print("*** done recording")
                 app.recorder.temp = []
                 if app.recorder.stream.is_active():
                     app.recorder.pause()
