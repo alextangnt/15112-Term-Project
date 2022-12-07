@@ -17,7 +17,7 @@ def checkButtonPress(app,mouseX,mouseY):
         butt.cy-butt.bh/2<mouseY<butt.cy+butt.bh/2 and
         butt.screen == app.currScreen):
             pressButton(app,butt)
-            print(f'pressed {butt} button')
+            #print(f'pressed {butt} button')
 
 def buttonHover(app,mouseX,mouseY):
     for butt in Button.butts:
@@ -27,6 +27,18 @@ def buttonHover(app,mouseX,mouseY):
             #pressButton(app,button)
             butt.hovered = True
             butt.scale = 110
+            if butt.title == 'Easy':
+                app.message = 'No obstacles, slow notes!'
+            elif butt.title == 'Medium':
+                app.message = 'Some obstacles, faster notes!'
+            elif butt.title == 'Hard':
+                app.message = 'Faster and even more danger!'
+            elif butt.title == 'Infinite':
+                app.message = 'No dying. Not in real life, though.'
+            elif butt.title == 'Sing Mode!':
+                app.message = 'Sing your heart out!'
+            else:
+                app.message = None
         else:
             butt.scale = 100
             butt.hovered = False
@@ -39,6 +51,7 @@ def movingStep(app):
                 app.onOff = None
                 if app.pendingScreen != None:
                     setActiveScreen(app.pendingScreen)
+                    
         if app.onOff == 'on':
             if Element.moveOnStep(app.currScreen):
                 app.onOff = None
@@ -68,19 +81,17 @@ def openImages(app):
     app.bugGif=loadAnimatedGif(app, 'images/bug.gif')
     app.bugGifFast=app.bugGif
 
-    app.birdClosedGif2=loadAlternateGif(app, 'images/bird_closed.gif')
-    app.birdOpenGif2=loadAlternateGif(app, 'images/bird_open.gif')
-    app.bugGif2=loadAlternateGif(app, 'images/bug.gif')
+    app.birdClosedGif2=loadAnimatedGif(app, 'images/bird_closed.gif','blue')
+    app.birdOpenGif2=loadAnimatedGif(app, 'images/bird_open.gif','blue')
+    app.bugGif2=loadAnimatedGif(app, 'images/bug.gif','blue')
+    app.evilBugGif=loadAnimatedGif(app, 'images/bug.gif','evil')
+    app.boostBugGif=loadAnimatedGif(app, 'images/bug.gif','boost')
 
     #keeping track of gif frames
     app.count0=0
     app.count1=0
     app.count2=0
     app.count3=0
-    #app.cloud1=CMUImage(Image.open('images/cloud1.png'))
-    # app.cloud2=CMUImage(Image.open('images/cloud2.png'))
-    # app.cloud3=CMUImage(Image.open('images/cloud3.png'))
-    # app.cloud4=CMUImage(Image.open('images/cloud4.png'))
     
     app.cloudImages=[]
     for image in ['images/cloud1.png','images/cloud2.png','images/cloud3.png','images/cloud4.png']:
@@ -107,7 +118,7 @@ def openImages(app):
     app.tweater1=CMUImage(Image.open('images/tweater.png'))
     app.tweaterE = Element('home',app.width/2,app.height/3,'x')
 
-def loadAnimatedGif(app,path):
+def loadAnimatedGif(app,path,setting=None):
     pilImages = Image.open(path)
     if pilImages.format != 'GIF':
         raise Exception(f'{path} is not an animated image!')
@@ -117,21 +128,11 @@ def loadAnimatedGif(app,path):
     for frame in range(pilImages.n_frames):
         pilImages.seek(frame)
         pilImage = pilImages.copy()
-        cmuImages.append(CMUImage(pilImage))
-    return cmuImages
-
-def loadAlternateGif(app,path):
-    pilImages = Image.open(path)
-    if pilImages.format != 'GIF':
-        raise Exception(f'{path} is not an animated image!')
-    if not pilImages.is_animated:
-        raise Exception(f'{path} is not an animated image!')
-    cmuImages = [ ]
-    for frame in range(pilImages.n_frames):
-        pilImages.seek(frame)
-        pilImage = pilImages.copy()
-        pilImage = editImage(pilImage,'blue')
-        cmuImages.append(CMUImage(pilImage))
+        if setting == None:
+            cmuImages.append(CMUImage(pilImage))
+        else:
+            pilImage = editImage(pilImage,setting)
+            cmuImages.append(CMUImage(pilImage))
     return cmuImages
 
 #from editing pixels demo         
@@ -168,11 +169,48 @@ def editImage(sourceImage,setting):
                     newImage.putpixel((x,y),(0,0,0,0))
                 else:
                     newImage.putpixel((x,y),(int(r*0.4*(r-b)/25),int(g*0.2*(g-b)/13),int(b*0.3),a))
+            elif setting == 'evil':
+                if [r,g,b,a] == [0,0,0,0]:
+                    newImage.putpixel((x,y),(0,0,0,0))
+                else:
+                    newImage.putpixel((x,y),(min(255,int(r*3)),int(g*0.4),int(b*0.3),a))
+            elif setting == 'boost':
+                if [r,g,b,a] == [0,0,0,0]:
+                    newImage.putpixel((x,y),(0,0,0,0))
+                else:
+                    if r > 160 and b > 160 and g > 160:
+                        newImage.putpixel((x,y),(r,g,b,a))
+                    else:
+                        
+                        newImage.putpixel((x,y),(int(r*0.8),int(g*1.2),int(b*0.5),a))
                 
     return newImage
 
 def pressButton(app,which):
-    if which.title == 'Set Up':
+    if which.title == 'Modes':
+        app.onOff = 'off'
+        app.pendingScreen = 'modes'
+    elif which.title == 'Easy':
+        app.mode = 'easy'
+        #app.message = 'No obstacles, slow notes!'
+        app.message2 = 'Easy mode selected'
+    elif which.title == 'Medium':
+        app.mode = 'medium'
+        #app.message = 'Some obstacles, faster notes!'
+        app.message2 = 'Medium mode selected'
+    elif which.title == 'Hard':
+        app.mode = 'hard'
+        #app.message = 'Faster and even more danger!'
+        app.message2 = 'Hard mode selected'
+    elif which.title == 'Infinite':
+        app.mode = 'infinite'
+        #app.message = 'No dying. Not in real life, though.'
+        app.message2 = 'Infinite selected'
+    elif which.title == 'Sing Mode!':
+        app.mode = 'sing'
+        #app.message = 'Sing your heart out!'
+        app.message2 = 'Sing mode selected'
+    elif which.title == 'Set Up':
         app.onOff = 'off'
         app.pendingScreen = 'setup'
     elif which.title == 'Noise':
@@ -192,6 +230,7 @@ def pressButton(app,which):
     elif which.title == 'Done' or which.title == 'Home':
         app.onOff = 'off'
         app.pendingScreen = 'home'
+        
     elif which.title == 'continue':
         app.paused = not app.paused
     elif which.title == 'play':

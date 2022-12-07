@@ -105,24 +105,38 @@ class Recording():
         #print(int(freq),int(castedVal))
 
     def getNoteFreq(self):
-        castedVal = (self.pitchList[-1]-self.minPitch)/(self.maxPitch-self.minPitch)*self.outputHeight
-        if castedVal > self.outputHeight:
-            castedVal = self.outputHeight
+        # castedVal = (self.pitchList[-1]-self.minPitch)/(self.maxPitch-self.minPitch)*self.outputHeight
+        # if castedVal > self.outputHeight:
+        #     castedVal = self.outputHeight
         g3 = 196.00
         a3 = 220.65
         b3 = 246.94
         c4 = 261.63
         d4 = 293.66
-
+        e4 = 329.63
+        f4 = 349.23
+        g4 = 392.00
+        gOctave = [0,2,4,5,7,9,10,12]
         # using the formula Freq = note x 2^N/12 from
         # http://techlib.com/reference/musical_note_frequencies.htm#:~:text=Starting%20at%20any%20note%20the,be%20positive%2C%20negative%20or%20zero.
-        N = self.pitchList[-1]/Recording.startingFreq
-        N = 2^N/12
-
+        freq = self.pitchList[-1]
+        note = Recording.startingFreq
+        N = freq/note
+        N = 12*math.log(N)/math.log(2)
         
-        return castedVal
-        #print(int(freq),int(castedVal))
-
+        N = round(N)
+        #print(N)
+        #print('audioclass ' + str(self.outputHeight/9))
+        if N in gOctave:
+            place = gOctave.index(N)+1
+            return place*(self.outputHeight/9)
+        for i in range(len(gOctave)-1):
+            if gOctave[i]<N<gOctave[i+1]:
+                return (i+1)*(self.outputHeight/9)
+        if N<gOctave[0]:
+            return self.outputHeight/9
+        elif N>gOctave[-1]:
+            return 8*self.outputHeight/9
 
     @classmethod
     def updateNoise(self,noise):

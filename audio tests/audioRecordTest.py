@@ -56,8 +56,8 @@ def record():
                     freq = getFreq(transform,win_s,samplerate)
                     if freq!=None and int(freq) != 0:
                         #print(int(freq))
-                        testing.append(int(freq))
-                        getNoteFreq(freq)
+                        #testing.append(int(freq))
+                        testing.append(getNoteFreq(freq))
                 temp = []       
     except KeyboardInterrupt:
         print("Done recording")
@@ -155,7 +155,7 @@ def getNoteFreq(freq):
     note = startingFreq
     N = freq/note
     N = 12*math.log(N)/math.log(2)
-    print(N)
+    print(round(N))
     return N
 
 def almostEqual(a,b,round):

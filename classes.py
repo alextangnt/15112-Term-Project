@@ -2,19 +2,35 @@ import cmu_graphics
 import random
 import copy
 
-# Classes and original rail mechanic made by zilyuj, largely being restructured by me
+# Food and cloud classes initially made by zilyuj
 
 class Food:
     onScreenList = [ ]
     upcomingList=[]
-    def __init__(self, parameter, row, timeDelay):
+    delay = 40
+    ratio = 8
+    def __init__(self, parameter, row, timeDelay,song=False):
         self.parameter = parameter #the location of the food item on screen 
         self.row = row #the number of row that the food is in 
         self.timeDelay = timeDelay #amount of time delay before an item is added to the on-screen list
-        self.fast = bool(random.getrandbits(1))
+        if song:
+            self.fast=False
+        else:
+            self.fast = bool(random.getrandbits(1))
+        self.evil = False
+        self.boost = False
+        if not song:
+            evil = random.randint(1,Food.ratio)
+            if evil == 1:
+                self.evil = True
+                return
+            boost = random.randint(1,Food.ratio)
+            if boost == 1:
+                self.boost = True
 
     @classmethod   
     def onStep(cls, app):
+        
         if app.started == True and Food.upcomingList != [ ]:#if the upcomming list is not empty
             delay = Food.upcomingList[0].timeDelay #get the needed amount of time delay 
             app.timer += 1
@@ -24,10 +40,9 @@ class Food:
                 Food.onScreenList.append(Food.upcomingList.pop(0))#add the first food of the upcoming list to the on screen list
     
     def makeFood(app):
-
-        row=random.randrange(1,8)
-        timeDelay=random.randint(40,80)
-        parameter=[app.width,(row*(app.height-app.topBar)/8)+app.topBar]
+        row=random.randrange(1,9)
+        timeDelay=random.randint(int(Food.delay),int(Food.delay*2))
+        parameter=[app.width,(row*(app.height-app.topBar)/9)+app.topBar]
         
         return Food(parameter,row,timeDelay)
 
@@ -38,11 +53,26 @@ class Food:
             L.append(stuff)
         Food.upcomingList.extend(L)
 
+    def makeTwinkle(app):
+        song = []
+        notes = [0,1,1,5,5,6,6,5,0,4,4,3,3,2,2,1,0,5,5,4,4,3,3,2,0,5,5,4,4,3,3,2,0,1,1,5,5,6,6,5,0,4,4,3,3,2,2,1]
+        for note in range(1,len(notes)):
+            row = 9-notes[note]
+            parameter=[app.width,(row*(app.height-app.topBar)/9)+app.topBar]
+            if notes[note-1] == 0:
+                song.append(Food(parameter,row,int(Food.delay+20),song=True))
+            elif notes[note] == 0:
+                continue
+            else:
+                song.append(Food(parameter,row,int(Food.delay),song=True))
+        Food.upcomingList.extend(song)
+    
+    def __repr__(self):
+        return f'Food at {self.parameter}'
 
 class Cloud:
     onScreenList=[]
     upcomingList=[]
-    
     def __init__(self,parameter,cloudType,timeDelay):
         self.parameter= parameter
         self.timeDelay=timeDelay
@@ -77,7 +107,6 @@ class Cloud:
     
     
 class Bird:
-    rail = 14
     def __init__(self,cy):
         self.cy = cy
         self.mouthOpen = False
@@ -156,7 +185,7 @@ class Element():
 
 class Button(Element):
     butts = set()
-    def __init__(self,screen,title,cx,cy,bw=100,bh=40,description='',active=True,fontSize=25):
+    def __init__(self,screen,title,cx,cy,bw=120,bh=40,description='',active=True,fontSize=25):
         super().__init__(screen,cx,cy,'x')
         self.screen = screen
         self.title = title
@@ -169,6 +198,7 @@ class Button(Element):
         self.active = active
         self.hovered = False
         self.fontSize = fontSize
+        self.invisible = False
         Button.butts.add(self)
     
     def __repr__(self):

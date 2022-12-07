@@ -11,14 +11,14 @@ def drawScore(app):
     lcy=app.livesE.currY
     symbol = str(chr(0x2764))
     drawLabel(f'Score: {app.currScore}',scx,scy,font=app.font,fill=app.ingameColor,size=25,bold=True,align='left')
-    if not app.infinite:
+    if not app.infinite and not app.mode == 'sing':
         drawLabel(app.currLives*'<3',lcx,lcy,font=app.font,fill=app.ingameColor,size=25,align='left')
     #drawLabel('Score:',cx-90,cy,fill=app.textColor,size=25,bold=True,font=app.font)
 
 
 def drawButtons(app):
     for butt in Button.butts:
-        if butt.screen == app.currScreen:
+        if butt.screen == app.currScreen and not butt.invisible:
             if isinstance(butt,imgButton):
                 imgW, imgH = getImageSize(butt.img)
                 drawImage(butt.img, butt.currX, butt.currY, align='center',
@@ -28,7 +28,7 @@ def drawButtons(app):
                     drawLabel(butt.title,butt.currX,butt.currY,size=butt.fontSize*butt.scale/100,font=app.font,bold=True,fill=app.textColor,opacity=50)
                 else:
                     if butt.hovered:
-                        drawLabel(butt.title,butt.currX,butt.currY,size=butt.fontSize*butt.scale/100,font=app.font,bold=True,fill=app.hoverColor)
+                        drawLabel(butt.title.upper(),butt.currX,butt.currY,size=butt.fontSize*butt.scale/100,font=app.font,bold=True,fill=app.hoverColor)
                     else:
                         drawLabel(butt.title,butt.currX,butt.currY,size=butt.fontSize*butt.scale/100,font=app.font,bold=True,fill=app.textColor)
             
@@ -189,9 +189,13 @@ def drawFood(app):
             darkbug = app.bugGif2[int(app.count2)]
             fastbug = app.bugGifFast[int(app.count3)]
             darkfastbug = app.bugGif2[int(app.count3)]
-            
-            if each.fast:
-                #canvas.create_image(cx,cy-20,image=photoImage2)
+            evilbug = app.evilBugGif[int(app.count3)]
+            boostbug = app.boostBugGif[int(app.count2)]
+            if each.evil:
+                drawImage(evilbug, cx, cy, align='center')
+            elif each.boost or each.ender:
+                drawImage(boostbug, cx, cy, align='center')
+            elif each.fast:
                 if app.currEvent == 'dark':
                     interval = app.time-app.events['dark']
                     drawImage(darkbug, cx, cy, align='center',opacity = min(100,interval))
@@ -220,8 +224,9 @@ def drawFood(app):
 
     
 def drawLines(app):
-    for i in range(1,8):
-        drawLine(0,(app.height-app.topBar)*(i/8)+app.topBar,app.width,(app.height-app.topBar)*(i/8)+app.topBar,fill=app.textColor,opacity=50)
+    
+    for i in range(1,9):
+        drawLine(0,(app.height-app.topBar)*(i/9)+app.topBar,app.width,(app.height-app.topBar)*(i/9)+app.topBar,fill=app.ingameColor,opacity=35)
 
 def drawFilter(app):
     if app.currEvent == 'sunset':
